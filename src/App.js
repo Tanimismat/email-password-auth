@@ -1,4 +1,4 @@
-import { createUserWithEmailAndPassword, getAuth } from "firebase/auth";
+import { createUserWithEmailAndPassword, getAuth, sendEmailVerification, sendPasswordResetEmail, signInWithEmailAndPassword } from "firebase/auth";
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
 import app from "./firebase.init";
@@ -11,6 +11,7 @@ const auth = getAuth(app);
 function App() {
 
   const [validated, setValidated] = useState(false);
+  const [registered, setRegistered] = useState(false);
   const [error, setError] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -23,6 +24,11 @@ function App() {
   const handlePasswordChange = (e) => {
     // console.log(e.target.value)
     setPassword(e.target.value)
+  }
+
+  const handleRegisteredChange = (event) => {
+    // console.log(event.target.checked)
+    setRegistered(event.target.checked)
   }
 
   /* const handleFormSubmit = (event) => {
@@ -46,17 +52,53 @@ function App() {
     setValidated(true);
     setError('');
 
-    // console.log('Form submitted', email, password);
-    createUserWithEmailAndPassword(auth, email, password)
-      .then((userCredential) => {
-        // Signed in 
-        const user = userCredential.user;
-        console.log(user)
-      })
-      .catch((error) => {
-        console.error(error)
-      });
+    console.log('Form submitted', email, password);
+
+    if (registered) {
+      console.log('login :', email, password);
+      signInWithEmailAndPassword(auth, email, password)
+        .then((userCredential) => {
+          // Signed in successful
+          const user = userCredential.user;
+          console.log(user)
+        })
+        .catch((error) => {
+          console.error("my error", error)
+          setError(error.message)
+        });
+    }
+    else {
+      createUserWithEmailAndPassword(auth, email, password)
+        .then((userCredential) => {
+          // Signed in successful
+          const user = userCredential.user;
+          console.log(user)
+          setEmail('');
+          setPassword('');
+          verifyEmail();
+        })
+        .catch((error) => {
+          console.error("my error", error)
+          setError(error.message)
+        });
+    }
+
     // event.preventDefault()
+  }
+
+  const verifyEmail = () => {
+    sendEmailVerification(auth.currentUser)
+      .then(() => {
+        console.log('Email verification sent!');
+
+      });
+  }
+
+  const handlePasswordReset = () => {
+    sendPasswordResetEmail(auth, email)
+      .then(() => {
+        console.log('Password reset email sent!');
+      })
   }
 
   return (
@@ -69,16 +111,16 @@ function App() {
         <input type="submit" value="Login" />
       </form> */}
       <div className="registration w-50 mx-auto">
-        <h3 className='text-primary'>Please Register!!</h3>
+        <h3 className='text-primary'>Please {registered ? 'Login' : 'Register'}!!</h3>
         <Form noValidate validated={validated} onSubmit={handleFormSubmit}>
           <Form.Group className="mb-3" controlId="formBasicEmail">
             <Form.Label>Email address</Form.Label>
             <Form.Control onBlur={handleEmailChange} type="email" placeholder="Enter email" required />
             <Form.Text className="text-muted">
-              We'll never share your email with anyone else.
+              We'll never share your email with anyone else
             </Form.Text>
             <Form.Control.Feedback type="invalid">
-              Please provide a valid Email.
+              Please provide a valid Email
             </Form.Control.Feedback>
           </Form.Group>
 
@@ -86,12 +128,20 @@ function App() {
             <Form.Label>Password</Form.Label>
             <Form.Control onBlur={handlePasswordChange} type="password" placeholder="Password" required />
             <Form.Control.Feedback type="invalid">
-              Please provide a valid password.
+              Please provide a valid password
             </Form.Control.Feedback>
           </Form.Group>
+
+          <p className="text-success">{'Success!!'}</p>
           <p className="text-danger">{error}</p>
+
+          <Form.Group className="mb-3" controlId="formBasicCheckbox">
+            <Form.Check onChange={handleRegisteredChange} type="checkbox" label="Already Registered?" />
+          </Form.Group>
+          <Button onClick={handlePasswordReset} variant="link">Forget Password?</Button>
+          <br />
           <Button variant="primary" type="submit">
-            Submit
+            {/* Submit */} {registered ? 'Login' : 'Register'}
           </Button>
         </Form>
       </div>
