@@ -1,4 +1,4 @@
-import { createUserWithEmailAndPassword, getAuth, sendEmailVerification, sendPasswordResetEmail, signInWithEmailAndPassword } from "firebase/auth";
+import { createUserWithEmailAndPassword, getAuth, sendEmailVerification, sendPasswordResetEmail, signInWithEmailAndPassword, updateProfile } from "firebase/auth";
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
 import app from "./firebase.init";
@@ -12,23 +12,28 @@ function App() {
 
   const [validated, setValidated] = useState(false);
   const [registered, setRegistered] = useState(false);
+  const [name, setName] = useState('');
   const [error, setError] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
+  const handleNameBlur = e => {
+    setName(e.target.value);
+  }
+
   const handleEmailChange = (e) => {
     // console.log(e.target.value)
-    setEmail(e.target.value)
+    setEmail(e.target.value);
   }
 
   const handlePasswordChange = (e) => {
     // console.log(e.target.value)
-    setPassword(e.target.value)
+    setPassword(e.target.value);
   }
 
   const handleRegisteredChange = (event) => {
     // console.log(event.target.checked)
-    setRegistered(event.target.checked)
+    setRegistered(event.target.checked);
   }
 
   /* const handleFormSubmit = (event) => {
@@ -52,7 +57,7 @@ function App() {
     setValidated(true);
     setError('');
 
-    console.log('Form submitted', email, password);
+    console.log('Form submitted', name, email, password);
 
     if (registered) {
       console.log('login :', email, password);
@@ -76,6 +81,7 @@ function App() {
           setEmail('');
           setPassword('');
           verifyEmail();
+          setUserName()
         })
         .catch((error) => {
           console.error("my error", error)
@@ -84,6 +90,19 @@ function App() {
     }
 
     // event.preventDefault()
+  }
+
+  const setUserName = () => {
+    updateProfile(auth.currentUser, {
+      displayName: name
+    })
+      .then(() => {
+        console.log('updating name');
+      })
+      .catch((error) => {
+        console.error('my error ', error)
+        setError(error.message);
+      });
   }
 
   const verifyEmail = () => {
@@ -113,6 +132,18 @@ function App() {
       <div className="registration w-50 mx-auto">
         <h3 className='text-primary'>Please {registered ? 'Login' : 'Register'}!!</h3>
         <Form noValidate validated={validated} onSubmit={handleFormSubmit}>
+
+          {
+            !registered &&
+            <Form.Group className="mb-3" controlId="formBasicName">
+              <Form.Label>Your Name</Form.Label>
+              <Form.Control onBlur={handleNameBlur} type="text" placeholder="Name" required />
+              <Form.Control.Feedback type="invalid">
+                Please provide your name
+              </Form.Control.Feedback>
+            </Form.Group>
+          }
+
           <Form.Group className="mb-3" controlId="formBasicEmail">
             <Form.Label>Email address</Form.Label>
             <Form.Control onBlur={handleEmailChange} type="email" placeholder="Enter email" required />
@@ -145,6 +176,7 @@ function App() {
           </Button>
         </Form>
       </div>
+
     </div>
   );
 }
